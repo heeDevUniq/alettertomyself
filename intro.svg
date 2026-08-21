@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380" role="img" aria-label="그때의 나에게">
+  <defs>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eeeff2"/>
+      <stop offset="1" stop-color="#f6f6f7"/>
+    </linearGradient>
+    <linearGradient id="mend" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6b727e" stop-opacity="0.30"/>
+      <stop offset="0.5" stop-color="#6b727e" stop-opacity="1"/>
+      <stop offset="1" stop-color="#6b727e" stop-opacity="0.30"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.74" r="0.42">
+      <stop offset="0" stop-color="#6b727e" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#6b727e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="380" fill="url(#ground)"/>
+  <rect width="1200" height="380" fill="url(#glow)"/>
+
+  <g fill="none" stroke-linecap="round">
+    <path d="M110 282 H455" stroke="#d5d8de" stroke-width="2"/>
+    <path d="M745 282 H1090" stroke="#d5d8de" stroke-width="2"/>
+
+    <path d="M455 282 L487 262 L512 300 L546 268 L578 302 L610 264 L642 298 L676 266 L710 296 L745 282"
+          stroke="url(#mend)" stroke-width="3.5"/>
+
+    <path d="M512 300 L505 320" stroke="#6b727e" stroke-width="1.6" opacity="0.5"/>
+    <path d="M610 264 L618 244" stroke="#6b727e" stroke-width="1.6" opacity="0.5"/>
+    <path d="M676 266 L684 248" stroke="#6b727e" stroke-width="1.4" opacity="0.4"/>
+    <path d="M578 302 L570 322" stroke="#6b727e" stroke-width="1.4" opacity="0.4"/>
+  </g>
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif" text-anchor="middle">
+    <text x="600" y="106" font-size="16" letter-spacing="7" fill="#9ca1aa">A LETTER TO MYSELF</text>
+    <text x="600" y="190" font-size="60" font-weight="700" fill="#262a32">그때의 나에게</text>
+    <text x="600" y="238" font-size="20" fill="#5a6270">지워지지 않아도, 아물 수는 있습니다</text>
+    <text x="600" y="352" font-size="15" letter-spacing="2" fill="#8b9098">흉터는 아물었다는 뜻입니다</text>
+  </g>
+</svg>
