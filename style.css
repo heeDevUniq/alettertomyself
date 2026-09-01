@@ -436,6 +436,91 @@ body {
   color: var(--ink-soft);
 }
 
+.weigh-response {
+  text-align: center;
+  animation: fade-in 0.45s ease both;
+}
+
+.weigh-response-text {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--accent-deep);
+  background: var(--card-bg);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.gesture-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.gesture-item {
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.3rem;
+  transition: border-color 0.2s ease;
+}
+
+.gesture-item.answered {
+  border-color: var(--accent);
+}
+
+.gesture-text {
+  font-size: 0.98rem;
+  margin-bottom: 0.9rem;
+}
+
+.gesture-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.gesture-option {
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: var(--bg);
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) * 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gesture-option:hover {
+  border-color: var(--accent);
+}
+
+.gesture-option.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.gesture-option-label {
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.gesture-option-hint {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+}
+
+.gesture-option.selected .gesture-option-label,
+.gesture-option.selected .gesture-option-hint {
+  color: #fff;
+}
+
 .btn-skip {
   font: inherit;
   display: block;
@@ -512,21 +597,16 @@ body {
   font-size: 0.98rem;
 }
 
-/* 이미 지나온 것들은 한 발 물러나 보이게 한다 */
-.result-group.level-healed .result-group-title {
-  color: var(--ink-soft);
-  border-bottom-color: var(--card-border);
-}
-
-.result-group.level-healed .result-item {
+/* 내려놓은 것들은 한 발 물러나 보이게 한다 */
+.result-group.gesture-setdown .result-item,
+.result-group.gesture-return .result-item {
   background: transparent;
   border-style: dashed;
-  border-color: var(--card-border);
   color: var(--ink-soft);
 }
 
-.result-group.level-occasional .result-item {
-  border-color: var(--card-border);
+.result-group.gesture-return .result-group-title {
+  color: var(--ink-soft);
 }
 
 .result-skipped {

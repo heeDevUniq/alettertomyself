@@ -22,6 +22,9 @@ const state = {
   weights: {},      // id -> 0~3 (WEIGHT_LEVELS 의 value)
   skipped: [],      // 답하지 않고 넘긴 id 목록
 
+  // 놓아주기 단계
+  gestures: {},     // id -> GESTURES 의 key
+
   // 사용자의 인터랙션 기록
   interactions: {
     startedAt: null,
@@ -46,6 +49,8 @@ function init() {
   document.getElementById("btn-start").addEventListener("click", startJourney);
   document.getElementById("btn-next-select").addEventListener("click", startWeighing);
   document.getElementById("btn-skip").addEventListener("click", skipWound);
+  document.getElementById("btn-weigh-next").addEventListener("click", continueWeighing);
+  document.getElementById("btn-next-gesture").addEventListener("click", finishGesture);
   document.getElementById("btn-next-present").addEventListener("click", finishPresent);
   document.getElementById("btn-copy").addEventListener("click", copyPrompt);
   document.getElementById("btn-restart").addEventListener("click", restart);
@@ -84,6 +89,7 @@ function startJourney() {
   state.selectedPresent = [];
   state.weights = {};
   state.skipped = [];
+  state.gestures = {};
   state.interactions = {
     startedAt: Date.now(),
     lastActionAt: Date.now(),
@@ -96,12 +102,11 @@ function startJourney() {
   showScreen("select");
 }
 
-// 상처 카드를 영역별로 묶어서 그린다.
+// 영역 별 상처 카드
 function renderChoices() {
   const container = document.getElementById("choice-groups");
   container.innerHTML = "";
 
-  // 같은 category 끼리 묶는다
   const groups = {};
   WOUNDS.forEach(function (wound) {
     if (!groups[wound.category]) groups[wound.category] = [];
@@ -142,7 +147,6 @@ function renderChoices() {
   updateSelectStatus();
 }
 
-// 목록이 길기 때문에, 영역으로 바로 이동할 수 있는 링크를 만든다.
 function renderGroupNav(categories) {
   const nav = document.getElementById("group-nav");
   nav.innerHTML = "";
@@ -156,7 +160,7 @@ function renderGroupNav(categories) {
   });
 }
 
-// 카드를 고르거나 취소한다.
+// 카드를 고르기/고르기 취소
 function selectWound(id) {
   const index = state.selectedWounds.indexOf(id);
   const sec = elapsedSinceLastAction();
@@ -181,7 +185,7 @@ function selectWound(id) {
   updateSelectStatus();
 }
 
-// 선택 상태 표시 + 카운터 + 다음 버튼을 갱신한다.
+// 선택 상태 표시 + 카운터 + 다음 버튼을 갱신
 function updateSelectStatus() {
   const count = state.selectedWounds.length;
   const maxed = count >= MAX_SELECT;
@@ -190,7 +194,6 @@ function updateSelectStatus() {
     const id = Number(card.dataset.id);
     const picked = state.selectedWounds.includes(id);
     card.classList.toggle("selected", picked);
-    // 상한에 닿으면 고르지 않은 카드는 흐리게 해서 더 담을 수 없다는 걸 보여준다
     card.classList.toggle("dimmed", maxed && !picked);
   });
 
@@ -206,7 +209,6 @@ function updateSelectStatus() {
   }
 }
 
-// 고르기 화면 하단에 짧은 안내를 띄운다.
 function showSelectHint(message, quiet) {
   const hint = document.getElementById("select-hint");
   hint.textContent = message;
@@ -260,9 +262,9 @@ function renderWeighOptions() {
 
 // 지금 차례인 상처 하나를 보여준다.
 function renderWeighCard() {
-  // 다 답했으면 지금의 나를 물으러 넘어간다
+  // 다 답했으면 놓아주기로 넘어간다
   if (state.weighIndex >= state.weighQueue.length) {
-    startPresent();
+    startGesture();
     return;
   }
 
@@ -279,15 +281,42 @@ function renderWeighCard() {
 }
 
 // 지금의 무게를 답한다.
+// 답한 직후 바로 다음 카드로 넘기지 않고, 그 자리에서 한마디를 돌려준다.
+// 침묵하고 넘어가면 설문지가 되고, 그게 상처를 긁는 느낌의 원인이었다.
 function answerWeigh(value) {
   const id = state.weighQueue[state.weighIndex];
   const sec = elapsedSinceLastAction();
 
   state.weights[id] = value;
   state.interactions.weighs.push({ id: id, value: value, sec: sec });
-  state.weighIndex += 1;
 
   console.log("[answerWeigh]", id, "→", value, sec + "s");
+  showWeighResponse(id, value);
+}
+
+// 답에 대한 한마디를 보여준다.
+// 아직 아프다고 답한 경우에는 그 상처에 맞게 따로 쓴 말을, 아니면 무게에 맞는 말을 쓴다.
+// 156개를 개별로 써 둔 이유는, 같은 영역 안에도 폭력과 비교처럼 성격이 다른 일이 섞여
+// 하나의 문장으로는 엉뚱한 말이 나갔기 때문이다.
+function showWeighResponse(id, value) {
+  const wound = findWoundById(id);
+  const message = value >= 2
+    ? (WOUND_SAY[id] || HARM_RESPONSES[wound.harm])
+    : WEIGH_RESPONSES[value];
+
+  document.getElementById("weigh-response-text").textContent = message;
+  document.getElementById("weigh-options").hidden = true;
+  document.getElementById("btn-skip").hidden = true;
+  document.getElementById("weigh-response").hidden = false;
+}
+
+// 한마디를 읽고 나면 다음 카드로 넘어간다.
+function continueWeighing() {
+  document.getElementById("weigh-response").hidden = true;
+  document.getElementById("weigh-options").hidden = false;
+  document.getElementById("btn-skip").hidden = false;
+
+  state.weighIndex += 1;
   renderWeighCard();
 }
 
@@ -313,6 +342,99 @@ function updateWeighProgress() {
 }
 
 // -------------------------------------------------------
+// 놓아주기 단계
+// -------------------------------------------------------
+
+// 무게를 매기는 것만으로는 측정에서 끝난다.
+// 각 상처를 어떻게 할지 직접 정하게 해서, 사용자가 무언가를 하게 만든다.
+function startGesture() {
+  state.gestures = {};
+  renderGestureList();
+  showScreen("gesture");
+}
+
+function renderGestureList() {
+  const list = document.getElementById("gesture-list");
+  list.innerHTML = "";
+
+  const targets = state.weighQueue.filter(function (id) {
+    return state.weights[id] !== undefined;
+  });
+
+  document.getElementById("gesture-total").textContent = targets.length;
+
+  targets.forEach(function (id) {
+    const item = document.createElement("div");
+    item.className = "gesture-item";
+    item.dataset.id = id;
+
+    const text = document.createElement("p");
+    text.className = "gesture-text";
+    text.textContent = findWoundById(id).text;
+
+    const options = document.createElement("div");
+    options.className = "gesture-options";
+
+    GESTURES.forEach(function (gesture) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gesture-option";
+      button.dataset.key = gesture.key;
+
+      const label = document.createElement("span");
+      label.className = "gesture-option-label";
+      label.textContent = gesture.label;
+
+      const hint = document.createElement("span");
+      hint.className = "gesture-option-hint";
+      hint.textContent = gesture.hint;
+
+      button.appendChild(label);
+      button.appendChild(hint);
+      button.addEventListener("click", function () {
+        setGesture(id, gesture.key);
+      });
+      options.appendChild(button);
+    });
+
+    item.appendChild(text);
+    item.appendChild(options);
+    list.appendChild(item);
+  });
+
+  updateGestureStatus();
+}
+
+function setGesture(id, key) {
+  state.gestures[id] = key;
+  console.log("[setGesture]", id, "→", key);
+  updateGestureStatus();
+}
+
+function updateGestureStatus() {
+  const total = document.querySelectorAll(".gesture-item").length;
+  const done = Object.keys(state.gestures).length;
+
+  document.querySelectorAll(".gesture-item").forEach(function (item) {
+    const id = Number(item.dataset.id);
+    const chosen = state.gestures[id];
+    item.classList.toggle("answered", chosen !== undefined);
+    item.querySelectorAll(".gesture-option").forEach(function (button) {
+      button.classList.toggle("selected", button.dataset.key === chosen);
+    });
+  });
+
+  document.getElementById("gesture-count").textContent = done;
+  document.getElementById("btn-next-gesture").disabled = done < total;
+  document.getElementById("gesture-hint").textContent =
+    done < total ? "남은 " + (total - done) + "개도 정해주세요." : "";
+}
+
+function finishGesture() {
+  startPresent();
+}
+
+// -------------------------------------------------------
 // 지금의 나 단계
 // -------------------------------------------------------
 
@@ -321,7 +443,7 @@ function startPresent() {
   showScreen("present");
 }
 
-// "그때는 없었지만 지금은 있는 것"을 영역별로 묶어서 그린다.
+// 그때는 없었지만 지금은 있는 것
 function renderPresentChoices() {
   const container = document.getElementById("present-groups");
   container.innerHTML = "";
@@ -397,7 +519,6 @@ function finishPresent() {
 // 결과
 // -------------------------------------------------------
 
-// 무게별로 상처를 묶는다. 아무것도 버리지 않고 전부 제자리에 놓는다.
 function groupByWeight() {
   const groups = {};
 
@@ -412,8 +533,6 @@ function groupByWeight() {
   return groups;
 }
 
-// 상처가 어느 영역에 가장 무겁게 모였는지 찾는다.
-// 아직 아픈 것일수록 큰 가중치를 준다.
 function findMainCategory() {
   const scores = {};
 
@@ -441,14 +560,12 @@ function findMainCategory() {
   return topCategory;
 }
 
-// 무거운 상처를 하나라도 골랐는지 확인한다.
 function hasHeavyWound() {
   return state.selectedWounds.some(function (id) {
     return findWoundById(id).heavy === true;
   });
 }
 
-// 도움받을 수 있는 곳 안내를 그린다.
 function renderSupportBox(box, title, desc) {
   box.className = "support-box";
   box.innerHTML = "";
@@ -484,24 +601,23 @@ function renderSupportBox(box, title, desc) {
   box.appendChild(list);
 }
 
-// 무게별로 묶인 상처와 영역 설명을 그린다.
+// 내가 어떻게 하기로 했는지
 function renderResult() {
   const container = document.getElementById("result-list");
   container.innerHTML = "";
 
-  const groups = groupByWeight();
-
-  // 아직 생생한 것부터 위에 놓는다
-  WEIGHT_LEVELS.slice().reverse().forEach(function (level) {
-    const ids = groups[level.value];
+  GESTURES.forEach(function (gesture) {
+    const ids = Object.keys(state.gestures)
+      .filter(function (id) { return state.gestures[id] === gesture.key; })
+      .map(Number);
     if (ids.length === 0) return;
 
     const section = document.createElement("div");
-    section.className = "result-group level-" + level.key;
+    section.className = "result-group gesture-" + gesture.key;
 
     const title = document.createElement("h3");
     title.className = "result-group-title";
-    title.textContent = level.resultTitle;
+    title.textContent = gesture.resultTitle;
 
     const list = document.createElement("div");
     list.className = "result-items";
@@ -518,7 +634,6 @@ function renderResult() {
     container.appendChild(section);
   });
 
-  // 건너뛴 것이 있다면, 그것도 있는 그대로 적어둔다
   if (state.skipped.length > 0) {
     const note = document.createElement("p");
     note.className = "result-skipped";
@@ -549,7 +664,6 @@ function renderResult() {
     box.appendChild(desc);
   }
 
-  // 무거운 일을 고른 사람에게는 도움받을 곳을 함께 보여준다
   const support = document.getElementById("result-support");
   if (hasHeavyWound()) {
     renderSupportBox(support,
@@ -560,7 +674,7 @@ function renderResult() {
     support.innerHTML = "";
   }
 
-  // 붙여넣기용 질문지를 미리 만들어 둔다
+  // 붙여넣기용 질문지 생성
   document.getElementById("copy-status").textContent = "";
   document.getElementById("prompt-text").value = buildFullPrompt(buildSummary());
 }
@@ -583,7 +697,7 @@ function buildSummary() {
     return group.items.length > 0;
   });
 
-  // 답하기까지 유독 오래 걸린 것 — 빠른 답은 기록해도 의미가 없다
+  // 답하기까지 유독 오래 걸린 것
   const hesitated = state.interactions.weighs
     .filter(function (w) { return w.sec >= HESITATION_SEC; })
     .map(function (w) { return textOf(w.id); });
@@ -611,8 +725,22 @@ function buildSummary() {
     return PRESENT_ITEMS.find(function (item) { return item.id === id; }).text;
   });
 
+  // 어떻게 하기로 했는지
+  const byGesture = GESTURES.map(function (gesture) {
+    return {
+      key: gesture.key,
+      title: gesture.resultTitle,
+      items: Object.keys(state.gestures)
+        .filter(function (id) { return state.gestures[id] === gesture.key; })
+        .map(function (id) { return textOf(Number(id)); }),
+    };
+  }).filter(function (group) {
+    return group.items.length > 0;
+  });
+
   const summary = {
     byWeight: byWeight,
+    byGesture: byGesture,
     present: present,
     skippedCount: state.skipped.length,
     mainCategory: mainCategory ? CATEGORY_INFO[mainCategory].name : "",
@@ -680,6 +808,7 @@ function restart() {
   state.weighIndex = 0;
   state.weights = {};
   state.skipped = [];
+  state.gestures = {};
   showScreen("landing");
 }
 

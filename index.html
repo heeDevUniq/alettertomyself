@@ -89,10 +89,32 @@
       <button id="btn-skip" type="button" class="btn-skip">
         지금은 이 이야기를 하고 싶지 않아요
       </button>
+      <div id="weigh-response" class="weigh-response" hidden>
+        <p id="weigh-response-text" class="weigh-response-text"></p>
+        <button id="btn-weigh-next" type="button" class="btn btn-primary">다음</button>
+      </div>
     </div>
   </section>
 
-  <!-- 화면 4: 지금의 나 -->
+  <!-- 화면 4: 놓아주기 -->
+  <section id="screen-gesture" class="screen">
+    <header class="step-header">
+      <p class="step-label">놓아주기</p>
+      <h2 class="step-title">이제 어떻게 할지 정해주세요</h2>
+      <p class="step-desc">
+        하나씩 보고 지금 마음이 가는 쪽을 골라주세요.<br />
+        무엇을 골라도 맞습니다. 아직 놓을 준비가 안 됐다면 갖고 있어도 됩니다.
+      </p>
+    </header>
+    <div id="gesture-list" class="gesture-list"></div>
+    <footer class="step-footer sticky">
+      <p class="sticky-count"><strong id="gesture-count">0</strong> / <span id="gesture-total">0</span></p>
+      <p id="gesture-hint" class="select-hint"></p>
+      <button id="btn-next-gesture" class="btn btn-primary" disabled>다음</button>
+    </footer>
+  </section>
+
+  <!-- 화면 5: 지금의 나 -->
   <section id="screen-present" class="screen">
     <header class="step-header">
       <p class="step-label">지금의 나</p>
@@ -109,7 +131,7 @@
     </footer>
   </section>
 
-  <!-- 화면 5: 결과 -->
+  <!-- 화면 6: 결과 -->
   <section id="screen-result" class="screen">
     <header class="step-header">
       <p class="step-label">돌아본 뒤에</p>
